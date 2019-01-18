@@ -17,7 +17,7 @@ constructor() {
   let rawProduct = {};
   rawProduct.name = fileProduct.SKUs[0].name;
   rawProduct.color = fileProduct.SKUs[0].variant_values.color.name;
-  rawProduct.price = fileProduct.prices.highSalePrice;
+  rawProduct.price = parseInt(fileProduct.prices.highSalePrice);
   
   this.state.rawProducts.push(rawProduct);
  }
@@ -36,16 +36,50 @@ constructor() {
 			this.state.colors = rfns.map(obj => obj.displayName);
 		}
 	}
-	//alert(this.state.colors);
+	
+	alert(this.state.colors);
 		
   //COLLECT PRICE RANGE LIST
-  
+	//let facets = CatalogData.facets;
+	for (let ix in facets) {
+		if (facets[ix].type === "RefinementMenu" && 
+				facets[ix].name === "Price" &&
+				facets[ix].refinementType === "Price")
+		{
+			let rfns = facets[ix].refinements;
+			this.state.priceRanges = rfns.map(obj => obj.displayName);
+		}
+	}
+	
+	//alert(this.state.priceRanges);
+	//this.state.priceRangesObjs = this.state.priceRanges.map(range => this.price_range_helper(range));
+	//alert(JSON.stringify(this.state.priceRangesObjs));
+
+	
   //DROPDOWN FOR FILTERING BY PRICE RANGE
   
   this.sortByPrices = this.sortByPrices.bind(this);
   
   //this.filterByColor = this.filterByColor.bind(this);
 
+}
+
+
+price_range_helper(rangeName){
+	if (rangeName == "" || rangeName === undefined) {
+		console.log("rangeName is empty");
+		return {v1:0,v2:0};
+	}
+	let strs = rangeName.split("-");
+	let v1, v2;
+	v1 = parseInt(strs[0]);
+	if (isNaN(v1) || v1 == null || v1 == "null")
+		v1 = 0;
+	v2 = parseInt(strs[1]);
+	if (isNaN(v2) || v2 == null || v2 == "null")
+		v2 = 0;
+		
+	return { v1, v2};
 }
 
 sortByPricesAsc = () => { console.log("sortByPrices(0)");this.sortByPrices(0);}
@@ -68,12 +102,28 @@ filterByColor(color) {
    let processedProducts = _.filter(this.state.rawProducts, function(val) { return val.color === color});
    this.setState({processedProducts});
 }
+
+filterByPriceRange(range) {
+   console.log("filterByPriceRange "+range);
+   let o1 = this.price_range_helper(range);
+   //alert("OOOOOOOOOOO1"+ JSON.stringify(o1));
+   let processedProducts = _.filter(this.state.rawProducts, function(val) { 
+   //console.log("CMP price="+val.price +"min "+o1.v1+"max "+o1.v2);
+   return val.price >= o1.v1 && val.price<=o1.v2});
+   this.setState({processedProducts});
+}
 ///////////////////////////////////////////
   
 render () {
 
     let strCatalog = this.render_helper(this.state.processedProducts);
-	return (<div> 
+
+//		<div style={{display:"inline-block", position:"fixed", top:"0"}}> 
+
+	return (
+	<div>
+	
+	<div> 
     <UncontrolledDropdown>
       <DropdownToggle caret>
         Dropdown
@@ -87,14 +137,21 @@ render () {
     </UncontrolledDropdown>
 
 	{this.render_helper_colors_dropdown()}
+	{this.render_helper_price_ranges_dropdown()}
+	</div>
 	
+	<div style={{display:"inline-block", float:"right", top:"0"}}>
 	{strCatalog} 
-	</div>);
+	</div>
+	
+	</div>
+	);
 }
 
 render_helper(products) {
-return products.map(product => <div> {product.name}  {product.price} {product.color}  </div>);
+return <div style={{display:"inline-block", float:"right", top:"0"}}> {products.map(product => product.name +" " + product.price + " " +product.color)} </div>
 }
+
 
 render_helper_colors_dropdown() {
 return (
@@ -110,4 +167,17 @@ return (
 )
 }
 
+render_helper_price_ranges_dropdown() {
+return (
+    <UncontrolledDropdown>
+      <DropdownToggle caret>
+        Price Ranges Dropdown
+      </DropdownToggle>
+      <DropdownMenu>
+        <DropdownItem header>FILTER By Price Range</DropdownItem>
+		{this.state.priceRanges.map(range => <DropdownItem onClick={this.filterByPriceRange.bind(this, range)}>{range}</DropdownItem>)}
+      </DropdownMenu>
+    </UncontrolledDropdown>
+)
+}
 }
