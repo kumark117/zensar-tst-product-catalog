@@ -110,9 +110,8 @@ render () {
         <option onClick={this.sortByPricesUI.bind(this,-1)}>Descending By Price</option>
       </select>
   
-<br/><br/>
+
 	{this.render_helper_colors()}
-<br/>	
 	{this.render_helper_price_ranges()}
 	</div>
 	
